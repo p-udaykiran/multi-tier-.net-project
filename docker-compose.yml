@@ -1,29 +1,35 @@
-version: '3.8'
+version: '3.8'   # Docker Compose file format version
 
 services:
+  # --------------------------
+  # MongoDB Database Service
+  # --------------------------
   mongodb:
-    image: mongo:7.0
+    image: mongo:7.0                 # Official MongoDB image
     container_name: mongodb
     environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: example
+      MONGO_INITDB_ROOT_USERNAME: root     # Root user
+      MONGO_INITDB_ROOT_PASSWORD: example  # Root password
     ports:
-      - "27017:27017"
+      - "27017:27017"                # Expose MongoDB on localhost:27017
     volumes:
-      - mongo-data:/data/db
-    healthcheck:
+      - mongo-data:/data/db          # Persist MongoDB data
+    healthcheck:                     # Healthcheck ensures DB is ready
       test: "echo 'db.stats()' | mongosh --host localhost:27017 --authenticationDatabase admin -u root -p example || exit 1"
       interval: 10s
       retries: 5
       start_period: 30s
       timeout: 10s
 
+  # --------------------------
+  # .NET Web Application
+  # --------------------------
   webapp:
-    build: .
+    build: .                         # Build from Dockerfile in current directory
     container_name: dotnet-mongo-crud
     ports:
-      - "8080:5035"  # Maps port 5035 in the container to port 8080 on the host
-    depends_on:
+      - "8080:5035"                  # Expose container port 5035 as host port 8080
+    depends_on:                      # Wait until MongoDB is healthy
       mongodb:
         condition: service_healthy
     environment:
@@ -31,8 +37,10 @@ services:
       MongoDB__ConnectionString: "mongodb://root:example@mongodb:27017"
       MongoDB__DatabaseName: "ProductDB"
     volumes:
-      - ./appsettings.json:/app/appsettings.json
+      - ./appsettings.json:/app/appsettings.json   # Override app settings from host
 
+# --------------------------
+# Named Volume for MongoDB
+# --------------------------
 volumes:
   mongo-data:
-
