@@ -15,7 +15,7 @@ metadata:
   name: mongo-pvc
 spec:
   accessModes:
-    - ReadWriteOnce   # Must be RWO on Azure Disk
+    - ReadWriteMany   # Must be RWO on Azure Disk
   resources:
     requests:
       storage: 1Gi
