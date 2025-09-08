@@ -19,7 +19,7 @@ metadata:
   name: mongo-pvc
 spec:
   accessModes:
-    - ReadWriteOnce
+    - ReadWriteMany
   resources:
     requests:
       storage: 1Gi
