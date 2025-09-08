@@ -66,4 +66,4 @@ jobs:
         kubectl get ns webapps || kubectl create ns webapps
         
         # Apply Kubernetes manifest for the .NET app
-        kubectl apply -f dotnet-app.yaml -n webapps
+        kubectl apply -f dotnet-mongo-app.yaml -n webapps
