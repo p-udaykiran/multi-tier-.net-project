@@ -1,0 +1,70 @@
+# ----------------------------------------------------
+# GitHub Actions Workflow
+# CI/CD to AKS using GitHub OIDC
+# This workflow builds a .NET app, pushes it to DockerHub,
+# and deploys it to Azure Kubernetes Service (AKS).
+# ----------------------------------------------------
+
+name: CI/CD to AKS using GitHub OIDC
+
+on:
+  push:
+    branches:
+      - main   # Trigger workflow only on pushes to the 'main' branch
+
+permissions:
+  id-token: write   # Needed for OIDC login to Azure
+  contents: read    # Allows read access to repo contents
+
+env:
+  IMAGE_NAME: udaypagidimari/dotnet-crud   # DockerHub repo for the image
+  TAG: latest                              # Image tag (can use git commit SHA for versioning)
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest   # Run on the latest Ubuntu VM hosted by GitHub
+
+    steps:
+    # Step 1: Checkout source code
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    # Step 2: Authenticate to DockerHub using GitHub secrets
+    - name: Login to DockerHub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    # Step 3: Build the Docker image for the .NET application
+    - name: Build Docker Image
+      run: docker build -t $IMAGE_NAME:$TAG .
+
+    # Step 4: Push the Docker image to DockerHub
+    - name: Push Docker Image
+      run: docker push $IMAGE_NAME:$TAG
+
+    # Step 5: Authenticate to Azure using OIDC (no secrets needed)
+    - name: Azure Login with OIDC
+      uses: azure/login@v1
+      with:
+        client-id: ${{ secrets.AZURE_CLIENT_ID }}         # From federated identity
+        tenant-id: ${{ secrets.AZURE_TENANT_ID }}         # Azure tenant ID
+        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }} # Azure subscription ID
+
+    # Step 6: Set AKS cluster context so kubectl can interact with it
+    - name: Set AKS context
+      uses: azure/aks-set-context@v3
+      with:
+        resource-group: ${{ secrets.AZURE_RESOURCE_GROUP }} # AKS resource group
+        cluster-name: ${{ secrets.AKS_CLUSTER_NAME }}       # AKS cluster name
+
+    # Step 7: Deploy the application to AKS
+    - name: Deploy to AKS
+      run: |
+        # Create namespace 'webapps' if it doesn't exist
+        kubectl get ns webapps || kubectl create ns webapps
+        
+        # Apply Kubernetes manifest for the .NET app
+        kubectl apply -f dotnet-app.yaml -n webapps
+s
