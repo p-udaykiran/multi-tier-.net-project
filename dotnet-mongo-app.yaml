@@ -117,7 +117,7 @@ spec:
     spec:
       containers:
         - name: webapp
-          image: adijaiswal/dotnet-mongo-crud:latest
+          image: udaypagidimari/dotnet-crud:latest
           ports:
             - containerPort: 5035
           env:
