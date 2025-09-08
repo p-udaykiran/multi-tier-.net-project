@@ -67,4 +67,3 @@ jobs:
         
         # Apply Kubernetes manifest for the .NET app
         kubectl apply -f dotnet-app.yaml -n webapps
-s
