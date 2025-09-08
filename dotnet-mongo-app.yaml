@@ -1,32 +1,26 @@
-# -------------------------------------------------------
-# Secret: MongoDB Root Credentials
-# -------------------------------------------------------
+# Secret for MongoDB
 apiVersion: v1
 kind: Secret
 metadata:
   name: mongo-secret
 type: Opaque
 data:
-  mongo-root-username: cm9vdA==        # base64 for "root"
-  mongo-root-password: ZXhhbXBsZQ==    # base64 for "example"
+  mongo-root-username: cm9vdA==        # root
+  mongo-root-password: ZXhhbXBsZQ==    # example
 ---
-# -------------------------------------------------------
-# PersistentVolumeClaim: MongoDB
-# -------------------------------------------------------
+# PersistentVolumeClaim (RWO for Azure Disk)
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: mongo-pvc
 spec:
   accessModes:
-    - ReadWriteMany
+    - ReadWriteOnce   # Must be RWO on Azure Disk
   resources:
     requests:
       storage: 1Gi
 ---
-# -------------------------------------------------------
-# Deployment: MongoDB
-# -------------------------------------------------------
+# MongoDB Deployment
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -60,23 +54,13 @@ spec:
           volumeMounts:
             - name: mongo-storage
               mountPath: /data/db
-          readinessProbe:
-            exec:
-              command:
-                - sh
-                - -c
-                - "echo 'db.stats()' | mongosh --host localhost:27017 -u $MONGO_INITDB_ROOT_USERNAME -p $MONGO_INITDB_ROOT_PASSWORD --authenticationDatabase admin"
-            initialDelaySeconds: 30
-            timeoutSeconds: 5
-            periodSeconds: 10
+          # Optional: remove readinessProbe if causing crash
       volumes:
         - name: mongo-storage
           persistentVolumeClaim:
             claimName: mongo-pvc
 ---
-# -------------------------------------------------------
-# Service: MongoDB
-# -------------------------------------------------------
+# MongoDB Service
 apiVersion: v1
 kind: Service
 metadata:
@@ -88,20 +72,7 @@ spec:
     - port: 27017
       targetPort: 27017
 ---
-# -------------------------------------------------------
-# ConfigMap: WebApp Environment Settings
-# -------------------------------------------------------
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: webapp-config
-data:
-  ASPNETCORE_ENVIRONMENT: Development
-  MongoDB__DatabaseName: ProductDB
----
-# -------------------------------------------------------
-# Deployment: .NET WebApp
-# -------------------------------------------------------
+# WebApp Deployment
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -123,21 +94,13 @@ spec:
             - containerPort: 5035
           env:
             - name: ASPNETCORE_ENVIRONMENT
-              valueFrom:
-                configMapKeyRef:
-                  name: webapp-config
-                  key: ASPNETCORE_ENVIRONMENT
+              value: Development
             - name: MongoDB__DatabaseName
-              valueFrom:
-                configMapKeyRef:
-                  name: webapp-config
-                  key: MongoDB__DatabaseName
+              value: ProductDB
             - name: MongoDB__ConnectionString
               value: "mongodb://root:example@mongodb:27017"
 ---
-# -------------------------------------------------------
-# Service: .NET WebApp
-# -------------------------------------------------------
+# WebApp Service
 apiVersion: v1
 kind: Service
 metadata:
