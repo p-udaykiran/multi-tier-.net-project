@@ -25,7 +25,7 @@ jobs:
     runs-on: ubuntu-latest   # Run on the latest Ubuntu VM hosted by GitHub
 
     steps:
-    # Step 1: Checkout source code
+    # Step 1: Checkout source code (github)
     - name: Checkout Code
       uses: actions/checkout@v3
 
