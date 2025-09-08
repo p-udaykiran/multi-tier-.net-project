@@ -65,7 +65,7 @@ spec:
               command:
                 - sh
                 - -c
-                - "echo 'db.stats()' | mongosh --host localhost:27017 -u $MONGO_INITDB_ROOT_USERNAME -p $MONGO_INITDB_ROOT_PASSWORD --authenticationDatabase admin"
+                - "echo 'db.stats()' | mongo --host localhost:27017 -u $MONGO_INITDB_ROOT_USERNAME -p $MONGO_INITDB_ROOT_PASSWORD --authenticationDatabase admin"
             initialDelaySeconds: 30
             periodSeconds: 10
       volumes:
